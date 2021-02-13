@@ -30,16 +30,17 @@ class RecommendationController extends Controller
     
             // array de musicas
             $tracks = $this->getTracks($this->getPlaylists($this->tema($temperatura), $token), $token)->items;
-            $tracksName = [];
-    
-            foreach ($tracks as $track){
+
+            $songs = function($musica) {
                 $song = new \StdClass();
-                $song->name = $track->track->name . ' - '. $track->track->artists[0]->name;
-                $song->href = $track->track->external_urls->spotify;
-                array_push($tracksName, $song);
-            }
+                $song->name = $musica->track->name . ' - '. $musica->track->artists[0]->name;
+                $song->href = $musica->track->external_urls->spotify;
+                return $song;
+            };
+
+            $songList = array_map($songs, $tracks);
     
-            return response()->json(['recomended' => $tracksName], 200);
+            return response()->json(['recomended' => $songList], 200);
         } catch (\Exception $e){
             return response()->json(['error' => $e->getMessage()], $e->getCode());
         }
