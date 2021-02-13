@@ -10,8 +10,8 @@ class RecommendationController extends Controller
 
     public function recommended(Request $request)
     {
-        try{
-            if(!$request->has('city') && !($request->has('lat') && $request->has('long'))) throw new \Exception('Please provide a valid city or lat/long', 400);
+        try {
+            if (!$request->has('city') && !($request->has('lat') && $request->has('long'))) throw new \Exception('Please provide a valid city or lat/long', 400);
 
             if ($request->has('city')) {
                 $city = $request->input('city');
@@ -23,28 +23,27 @@ class RecommendationController extends Controller
                 $long = $request->input('long');
                 $conditions = "lat=$lat&lon=$long";
             }
-    
+
             // temperatura do local recebido
             $temperatura = json_decode($this->getClimate($conditions))->main->temp;
             $token = $this->getSpotifyToken(); // Token spotify
-    
+
             // array de musicas
             $tracks = $this->getTracks($this->getPlaylists($this->tema($temperatura), $token), $token)->items;
 
-            $songs = function($musica) {
+            $songs = function ($musica) {
                 $song = new \StdClass();
-                $song->name = $musica->track->name . ' - '. $musica->track->artists[0]->name;
+                $song->name = $musica->track->name . ' - ' . $musica->track->artists[0]->name;
                 $song->href = $musica->track->external_urls->spotify;
                 return $song;
             };
 
             $songList = array_map($songs, $tracks);
-    
+
             return response()->json(['recomended' => $songList], 200);
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], $e->getCode());
         }
-
     }
 
     /**
@@ -53,10 +52,11 @@ class RecommendationController extends Controller
      * 
      * 
      */
-    private function getClimate($conditions){
+    private function getClimate($conditions)
+    {
         $apiKey = env('OPENWEATHERMAP_APPID');
         $url = "api.openweathermap.org/data/2.5/weather?$conditions&units=metric&appid=$apiKey";
-        
+
         return $this->apiGetRequest($url, false);
     }
 
@@ -147,7 +147,8 @@ class RecommendationController extends Controller
      * 
      * @return string json response
      */
-    private function apiGetRequest($url, $header) {
+    private function apiGetRequest($url, $header)
+    {
         $curl = curl_init();
 
         $curlOptionsHeader = [
@@ -173,7 +174,7 @@ class RecommendationController extends Controller
             CURLOPT_CUSTOMREQUEST => 'GET',
         ];
 
-        $header? curl_setopt_array($curl, $curlOptionsHeader) : curl_setopt_array($curl, $curlOptions);
+        $header ? curl_setopt_array($curl, $curlOptionsHeader) : curl_setopt_array($curl, $curlOptions);
 
         $response = curl_exec($curl);
         curl_close($curl);
